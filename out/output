@@ -1,0 +1,16 @@
+('Average loss at step ', 0, ': ', 211.11952209472656)
+('Average loss at step ', 10, ': ', 196.87263336181641)
+('Average loss at step ', 20, ': ', 191.77894592285156)
+('Average loss at step ', 30, ': ', 173.10775299072264)
+('Average loss at step ', 40, ': ', 154.7590446472168)
+NCE method took 0.524132 minutes to run 50 iterations
+
+
+Gradient:  IndexedSlices(indices=Tensor("gradients/embedding_lookup_grad/Reshape_1:0", shape=(128,), dtype=int32), values=Tensor("gradients/embedding_lookup_grad/Reshape:0", shape=(128, 300), dtype=float32), dense_shape=Tensor("gradients/embedding_lookup_grad/ToInt32:0", shape=(2,), dtype=int32))
+Variable:  <tf.Variable 'Variable:0' shape=(10000, 300) dtype=float32_ref>
+Variable:  <tf.Variable 'Variable_1:0' shape=(300, 10000) dtype=float32_ref>
+Variable:  <tf.Variable 'Variable_2:0' shape=(10000,) dtype=float32_ref>
+Gradient:  IndexedSlices(indices=Tensor("gradients/nce_loss/embedding_lookup_grad/Reshape_1:0", shape=(192,), dtype=int64), values=Tensor("gradients/nce_loss/embedding_lookup_grad/Reshape:0", shape=(192, 300), dtype=float32), dense_shape=Tensor("gradients/nce_loss/embedding_lookup_grad/ToInt32:0", shape=(2,), dtype=int32))
+Variable:  <tf.Variable 'Variable_3:0' shape=(10000, 300) dtype=float32_ref>
+Gradient:  IndexedSlices(indices=Tensor("gradients/nce_loss/embedding_lookup_1_grad/Reshape_1:0", shape=(192,), dtype=int64), values=Tensor("gradients/nce_loss/embedding_lookup_1_grad/Reshape:0", shape=(192,), dtype=float32), dense_shape=Tensor("gradients/nce_loss/embedding_lookup_1_grad/ToInt32:0", shape=(1,), dtype=int32))
+Variable:  <tf.Variable 'Variable_4:0' shape=(10000,) dtype=float32_ref>
