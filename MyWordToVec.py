@@ -134,6 +134,7 @@ with graph.as_default():
     embed = tf.nn.embedding_lookup(embeddings, train_inputs)
 
 
+
     # Construct the variables for the softmax
     weights = tf.Variable(tf.truncated_normal([embedding_size, vocabulary_size],stddev=1.0 / math.sqrt(embedding_size)))
     biases = tf.Variable(tf.zeros([vocabulary_size]))
@@ -151,17 +152,15 @@ with graph.as_default():
                             stddev=1.0 / math.sqrt(embedding_size)))
     nce_biases = tf.Variable(tf.zeros([vocabulary_size]))
 
-    nce_loss = tf.reduce_mean(tf.nn.nce_loss(weights=nce_weights,
+    loss_tensor = tf.nn.nce_loss(weights=nce_weights,
                        biases=nce_biases,
                        labels=train_context,
                        inputs=embed,
                        num_sampled=num_sampled,
-                       num_classes=vocabulary_size))
+                       num_classes=vocabulary_size)\
 
-
-    # optimizer = tf.train.GradientDescentOptimizer(1.0).minimize(nce_loss)
-    # optimizer = CustomOptimizer(1.0).minimize(nce_loss)
-    # optimizer = AdaptedOptimizer(1.0).minimize(nce_loss)
+    print("loss_tensor:...", loss_tensor)
+    nce_loss = tf.reduce_mean(loss_tensor)
 
     optimizer = CustomOptimizer(1.0)
     # TODO: figure out how compute gradients return a list of tuples
