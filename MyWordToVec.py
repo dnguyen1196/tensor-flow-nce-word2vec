@@ -1,15 +1,14 @@
-import collections
 import datetime as dt
 import math
 import os
 import random
 import zipfile
-
-import numpy as np
 import tensorflow as tf
+import collections
+import numpy as np
 
 from custom_optimizer.CustomOptimizer import CustomOptimizer
-from custom_optimizer.AdaptedOptimizer import AdaptedOptimizer
+
 
 def read_data(filename):
     with zipfile.ZipFile(filename) as f:
@@ -72,27 +71,6 @@ def generate_batch(data, batch_size, num_skips, skip_window):
     return batch, context
 
 
-def pretty_print_gradient(gradient):
-    print("Gradient information: ")
-    print(gradient.name)
-
-
-def pretty_print_variable(variable):
-    print("Variable information: "),
-    print(variable.initial_value)
-    print(variable.name)
-    print(variable.value())
-
-
-def gradient_processing(grads_and_var):
-    for (gradient, variable) in grads_and_var:
-        if gradient:
-            pretty_print_gradient(gradient)
-        if variable:
-            pretty_print_variable(variable)
-    return grads_and_var
-
-
 #################################################################################
 #
 #
@@ -111,6 +89,8 @@ embedding_size = 300  # Dimension of the embedding vector.
 skip_window = 2       # How many words to consider left and right.
 num_skips = 2         # How many times to reuse an input to generate a label.
 
+
+# VALIDATION PARAMETERS
 # We pick a random validation set to sample nearest neighbors. Here we limit the
 # validation samples to the words that have a low numeric ID, which by
 # construction are also the most frequent.
@@ -119,39 +99,27 @@ valid_window = 100  # Only pick dev samples in the head of the distribution.
 valid_examples = np.random.choice(valid_window, valid_size, replace=False)
 num_sampled = 64    # Number of negative examples to sample.
 
-graph = tf.Graph()
-
+graph = tf.Graph() # tensor flow graph -> how computations are transferred from nodes to nodes
 with graph.as_default():
-    # Input data.
-    train_inputs = tf.placeholder(tf.int32, shape=[batch_size])
+    train_inputs = tf.placeholder(tf.int32, shape=[batch_size]) # This is a place holder that will get
+    # value of the id of the words
     train_context = tf.placeholder(tf.int32, shape=[batch_size, 1])
+    # This is the context (surrounding words of the input
     valid_dataset = tf.constant(valid_examples, dtype=tf.int32)
 
-
-    # Look up embeddings for inputs.
     embeddings = tf.Variable(
         tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0))
     embed = tf.nn.embedding_lookup(embeddings, train_inputs)
-
-
-
-    # Construct the variables for the softmax
-    weights = tf.Variable(tf.truncated_normal([embedding_size, vocabulary_size],stddev=1.0 / math.sqrt(embedding_size)))
-    biases = tf.Variable(tf.zeros([vocabulary_size]))
-    hidden_out = tf.transpose(tf.matmul(tf.transpose(weights), tf.transpose(embed))) + biases
-
-
-    train_one_hot = tf.one_hot(train_context, vocabulary_size)
-    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=hidden_out, labels=train_one_hot))
-
-    # convert train_context to a one-hot format
-    train_one_hot = tf.one_hot(train_context, vocabulary_size)
-
+    # This is a built in tensorflow constructs for quick word representation look up
+    # Initialize the weights and biases variables, remember, Variables are the things
+    # that get changed when tensorflow runs
     nce_weights = tf.Variable(
         tf.truncated_normal([vocabulary_size, embedding_size],
                             stddev=1.0 / math.sqrt(embedding_size)))
     nce_biases = tf.Variable(tf.zeros([vocabulary_size]))
 
+    # TODO: implement my own loss tensor function
+    # This should combines the calls that calculate the nce_loss function
     loss_tensor = tf.nn.nce_loss(weights=nce_weights,
                        biases=nce_biases,
                        labels=train_context,
@@ -159,48 +127,28 @@ with graph.as_default():
                        num_sampled=num_sampled,
                        num_classes=vocabulary_size)\
 
-    print("loss_tensor:...", loss_tensor)
     nce_loss = tf.reduce_mean(loss_tensor)
 
+    # This should not change
     optimizer = CustomOptimizer(1.0)
-    # TODO: figure out how compute gradients return a list of tuples
-    # And can we replace this with a different function?
     grads_and_vars = optimizer.compute_gradients(nce_loss)
-    opt_operation = optimizer.apply_gradients(gradient_processing(grads_and_vars))
+    opt_operation = optimizer.apply_gradients(grads_and_vars)
 
-    # print ("Loss function class: ", nce_loss.__class__)
-    # print ("Optimizer class: ", optimizer.__class__)
-    # Compute the cosine similarity between minibatch examples and all embeddings.
-    norm = tf.sqrt(tf.reduce_sum(tf.square(embeddings), 1, keep_dims=True))
-    normalized_embeddings = embeddings / norm
-    valid_embeddings = tf.nn.embedding_lookup(normalized_embeddings, valid_dataset)
-    similarity = tf.matmul(valid_embeddings, normalized_embeddings, transpose_b=True)
-
-    # Add variable initializer.
     init = tf.global_variables_initializer()
 
 
-num_steps = 1
+num_steps = 10000
 step_size = 1000
 nce_start_time = dt.datetime.now()
 
 with tf.Session(graph=graph) as session:
     init.run()
     average_loss = 0
-    # optimizer = CustomOptimizer(1.0)
-    # grads_and_vars = optimizer.compute_gradients(nce_loss)
 
     for step in range(num_steps):
         batch_inputs, batch_context = generate_batch(data, batch_size, num_skips, skip_window)
         feed_dict = {train_inputs: batch_inputs, train_context: batch_context}
 
-        # _, loss_val = session.run([optimizer, cross_entropy], feed_dict=feed_dict)
-        # TODO: fix this so that we dont have to initialize a new optimizer
-        # optimizer = CustomOptimizer(1.0)
-        # grads_and_vars = optimizer.compute_gradients(nce_loss)
-        # optimizer = optimizer.apply_gradients(gradient_processing(grads_and_vars))
-        # _, loss_val = session.run([optimizer.apply_gradients(gradient_processing(grads_and_vars))
-        #                               , nce_loss], feed_dict=feed_dict)
         _, loss_val = session.run([opt_operation, nce_loss], feed_dict=feed_dict)
         average_loss += loss_val
 
@@ -211,22 +159,5 @@ with tf.Session(graph=graph) as session:
             average_loss = 0
 
 
-    # sim = similarity.eval()
-    # for i in range(valid_size):
-    #     valid_word = reverse_dictionary[valid_examples[i]]
-    #     top_k = 8  # number of nearest neighbors
-    #     nearest = (-sim[i, :]).argsort()[1:top_k + 1]
-    #     log_str = 'Nearest to %s:' % valid_word
-    #     close_word_list = []
-    #     for k in range(top_k):
-    #         close_word = reverse_dictionary[nearest[k]]
-    #         close_word_list.append(close_word)
-    #
-    #     print (log_str + ", ".join(close_word_list))
-    #
-    # final_embeddings = normalized_embeddings.eval()
-    # print (final_embeddings[0])
-
-
 nce_end_time = dt.datetime.now()
-print(("NCE method took {} minutes to run " +  str(num_steps) + " iterations").format((nce_end_time-nce_start_time).total_seconds()))
+print(("NCE method took {} seconds to run " +  str(num_steps) + " iterations").format((nce_end_time-nce_start_time).total_seconds()))
