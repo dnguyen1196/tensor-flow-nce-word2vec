@@ -6,6 +6,7 @@ import zipfile
 import tensorflow as tf
 import collections
 import numpy as np
+import nce_loss.nce_implementation as nce
 
 from custom_optimizer.CustomOptimizer import CustomOptimizer
 
@@ -110,6 +111,12 @@ with graph.as_default():
     embeddings = tf.Variable(
         tf.random_uniform([vocabulary_size, embedding_size], -1.0, 1.0))
     embed = tf.nn.embedding_lookup(embeddings, train_inputs)
+    # This returns a tensor of size [batch_size, embedding_dimension
+    # Note that train puts takes in the id of the word (int)
+
+    print("embed.__class__: ", embed.__class__)
+    print("embed: ", embed)
+
     # This is a built in tensorflow constructs for quick word representation look up
     # Initialize the weights and biases variables, remember, Variables are the things
     # that get changed when tensorflow runs
@@ -120,7 +127,7 @@ with graph.as_default():
 
     # TODO: implement my own loss tensor function
     # This should combines the calls that calculate the nce_loss function
-    loss_tensor = tf.nn.nce_loss(weights=nce_weights,
+    loss_tensor = nce.nce_loss(weights=nce_weights,
                        biases=nce_biases,
                        labels=train_context,
                        inputs=embed,
