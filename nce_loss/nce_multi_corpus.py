@@ -29,7 +29,6 @@ from tensorflow.python.ops import embedding_ops
 from tensorflow.python.ops import gen_nn_ops
 from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import nn_ops
-from tensorflow.python.ops import sparse_ops
 from tensorflow.python.ops import variables
 
 
@@ -880,6 +879,9 @@ def _compute_sampled_logits(weights,
                             num_sampled,
                             num_classes,
                             num_true=1,
+                            sampled_values=None,
+                            subtract_log_q=True,
+                            remove_accidental_hits=False,
                             partition_strategy="mod",
                             name=None):
     """Helper function for nce_loss and sampled_softmax_loss functions.
@@ -950,6 +952,7 @@ def _compute_sampled_logits(weights,
 
         # sampled_values is a tuple of tensors (3 to be exact)
         # shown right the line below
+        print("sampled_values: ", sampled_values)
         # NOTE: pylint cannot tell that 'sampled_values' is a sequence
         # pylint: disable=unpacking-non-sequence
         sampled, true_expected_count, sampled_expected_count = (
@@ -969,13 +972,19 @@ def _compute_sampled_logits(weights,
         all_w = embedding_ops.embedding_lookup(
             weights, all_ids, partition_strategy=partition_strategy)
 
+        print ("all_w: ", all_w) # The shape is 192, 300 (so 128 true samples and 64 negative samples)
+
+        # true_w shape is [batch_size * num_true, dim]
+        true_w = array_ops.slice(all_w, [0, 0],
+                                 array_ops.stack(
+                                     [array_ops.shape(labels_flat)[0], -1]))
+
         sampled_w = array_ops.slice(
             all_w, array_ops.stack([array_ops.shape(labels_flat)[0], 0]), [-1, -1])
         # inputs has shape [batch_size, dim]
         # sampled_w has shape [num_sampled, dim]
         # Apply X*W', which yields [batch_size, num_sampled]
         sampled_logits = math_ops.matmul(inputs, sampled_w, transpose_b=True)
-        print("sampled_logits: ", sampled_logits)
 
         # Retrieve the true and sampled biases, compute the true logits, and
         # add the biases to the true and sampled logits.
@@ -989,20 +998,6 @@ def _compute_sampled_logits(weights,
         # inputs shape is [batch_size, dim]
         # true_w shape is [batch_size * num_true, dim]
         # row_wise_dots is [batch_size, num_true, dim]
-        #
-        #
-        #
-        #           TRUE LOGITS
-        #
-        #
-        #
-
-        # true_w shape is [batch_size * num_true, dim]
-        true_w = array_ops.slice(all_w, [0, 0],
-                                 array_ops.stack(
-                                     [array_ops.shape(labels_flat)[0], -1]))
-        print("true_w: ", true_w)
-
         dim = array_ops.shape(true_w)[1:2]
         new_true_w_shape = array_ops.concat([[-1, num_true], dim], 0)
         row_wise_dots = math_ops.multiply(
@@ -1013,19 +1008,12 @@ def _compute_sampled_logits(weights,
         dots_as_matrix = array_ops.reshape(row_wise_dots,
                                            array_ops.concat([[-1], dim], 0))
         true_logits = array_ops.reshape(_sum_rows(dots_as_matrix), [-1, num_true])
-
-
-
-        print("true_logits: ", true_logits)
-
         true_b = array_ops.reshape(true_b, [-1, num_true])
         true_logits += true_b
         sampled_logits += sampled_b
 
-        print("sampled_logits before concat: ", sampled_logits)
         # Construct output logits and labels. The true labels/logits start at col 0.
         out_logits = array_ops.concat([true_logits, sampled_logits], 1)
-        print("out_logits: ", out_logits)
         # true_logits is a float tensor, ones_like(true_logits) is a float tensor
         # of ones. We then divide by num_true to ensure the per-example labels sum
         # to 1.0, i.e. form a proper probability distribution.
