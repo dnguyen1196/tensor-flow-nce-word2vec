@@ -130,7 +130,6 @@ with tf.Session(graph=graph) as session:
     index_2 = 0
 
     for step in range(num_steps):
-
         train_inputs_A = np.ndarray(shape=(split_batch_size), dtype=np.int32)
         train_context_A = np.ndarray(shape=(split_batch_size, 1), dtype=np.int32)
 
@@ -138,27 +137,22 @@ with tf.Session(graph=graph) as session:
         train_context_B = np.ndarray(shape=(split_batch_size, 1), dtype=np.int32)
 
         for i in range(split_batch_size):
-            train_inputs_A[i] = batch_data_1[(index_1 + i)%len(batch_data_1)]
+            center, context =  stream_1[(index_1 + i)%len(stream_1)]
+            train_inputs_A[i] = center
+            train_context_A[i] = context
+            index_1 = (index_1 + split_batch_size)%len(stream_1)
 
-        if index_1 + split_batch_size < len(stream_1):
-            batch_data_1 = stream_1[index_1:(index_1+split_batch_size)%len(stream_1)]
-        else:
-            batch_data_1 = stream_1[index_1:len(stream_1)] + stream_1[:(batch_size-len(stream_1)-index_1)]
-
-        if index_2 + split_batch_size < len(stream_2):
-            batch_data_2 = stream_2[index_2:(index_2+split_batch_size)%len(stream_2)]
-        else:
-            batch_data_2 = stream_2[index_2:len(stream_2)] + stream_2[:(batch_size-len(stream_2)-index_2)]
-
-        index_1, index_2 = (index_1+split_batch_size)%len(stream_1), (index_2+split_batch_size)%len(stream_2)
-
+            center, context =  stream_2[(index_2 + i)%len(stream_2)]
+            train_inputs_B[i] = center
+            train_context_B[i] = context
+            index_2 = (index_2 + split_batch_size)%len(stream_2)
 
         # train_context_A = tf.convert_to_tensor(train_context_A, dtype=tf.int32)
         # train_context_B = tf.convert_to_tensor(train_context_B, dtype=tf.int32)
 
-        feed_dict = {train_inputs_A: [index[0] for index in batch_data_1],
+        feed_dict = {train_inputs_A: train_inputs_A,
                    train_context_A: train_context_A,
-                   train_inputs_B: [index[0] for index in batch_data_2],
+                   train_inputs_B: train_inputs_B,
                    train_context_B: train_context_B}
 
         _, loss_nce = session.run([optimization_ops, nce_loss], feed_dict=feed_dict)
