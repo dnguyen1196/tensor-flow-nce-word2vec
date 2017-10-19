@@ -941,6 +941,12 @@ def _compute_sampled_logits(weights,
         #   sampled shape: [num_sampled] tensor
         #   true_expected_count shape = [batch_size, 1] tensor
         #   sampled_expected_count shape = [num_sampled] tensor
+        print("input: ", inputs)
+        print("labels: ", labels)
+        print("num_sampled: ", num_sampled)
+        print("num_true: ", num_true)
+        print("num_classes: ", num_classes)
+
         sampled_values = candidate_sampling_ops.log_uniform_candidate_sampler(
             true_classes=labels,
             num_true=num_true,

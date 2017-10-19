@@ -11,12 +11,6 @@ from tensorflow.python.ops import variables
 
 
 def _sum_rows(x):
-    """Returns a vector summing up each row of the matrix x."""
-    # _sum_rows(x) is equivalent to math_ops.reduce_sum(x, 1) when x is
-    # a matrix.  The gradient of _sum_rows(x) is more efficient than
-    # reduce_sum(x, 1)'s gradient in today's implementation. Therefore,
-    # we use _sum_rows(x) in the nce_loss() computation since the loss
-    # is mostly used for training.
     cols = array_ops.shape(x)[1]
     ones_shape = array_ops.stack([cols, 1])
     ones = array_ops.ones(ones_shape, x.dtype)
@@ -212,10 +206,10 @@ def _compute_logits_special(weights,
                             inputs,
                             num_sampled,
                             num_classes,
+                            factor_matrix,
                             num_true=1,
                             partition_strategy="mod",
-                            name=None,
-                            factor_matrix=None):
+                            name=None):
     """Helper function for nce_loss and sampled_softmax_loss functions.
 
     Computes sampled output training logits and labels suitable for implementing
@@ -270,9 +264,15 @@ def _compute_logits_special(weights,
             labels = math_ops.cast(labels, dtypes.int64)
         labels_flat = array_ops.reshape(labels, [-1])
 
-        # as the name implies, this flatten into a row tensor
+        print("input: ", inputs)
+        print("labels: ", labels)
+        print("num_sampled: ", num_sampled)
+        print("num_true: ", num_true)
+        print("num_classes: ", num_classes)
 
-        sampled_values = candidate_sampling_ops.log_uniform_candidate_sampler(true_classes=labels,
+        # as the name implies, this flatten into a row tensor
+        sampled_values = candidate_sampling_ops.log_uniform_candidate_sampler(
+            true_classes=labels,
             num_true=num_true,
             num_sampled=num_sampled,
             unique=True,
@@ -280,7 +280,6 @@ def _compute_logits_special(weights,
 
         # sampled_values is a tuple of tensors (3 to be exact)
         # shown right the line below
-        print("sampled_values: ", sampled_values)
         # NOTE: pylint cannot tell that 'sampled_values' is a sequence
         # pylint: disable=unpacking-non-sequence
 
@@ -311,7 +310,6 @@ def _compute_logits_special(weights,
         print("all_embeddings: ", all_embeddings)
         # all_embeddings is the word embeddings for all words in 1 batch including true labels
         # and wrong labels so its dimension is [num true + num negative, embedding dimension]
-
         # true_embeddings shape is [batch_size * num_true, dim]
         true_embeddings = array_ops.slice(
             all_embeddings, [0, 0], array_ops.stack([array_ops.shape(labels_flat)[0], -1]))
@@ -328,7 +326,6 @@ def _compute_logits_special(weights,
         # So each entry will be vi'sj where vi is a center sample word and s is a sampled word
         # Have to transpose sampled_embeddings so that we get the right value
         # sampled_logits = math_ops.matmul(inputs, sampled_embeddings, transpose_b=True)
-
         # NOTE:
         #
         #
@@ -338,8 +335,13 @@ def _compute_logits_special(weights,
         #
         # TODO: replace the usual sampled_logits to include factor_matrix
         # so its x'Bv instead of the usual x'v
-        print("factor_matrix: ", factor_matrix)
+        print("factor_matrix: ", factor_matrix.shape)
+        print("sampled_embeddings: ", sampled_embeddings)
+
+
         matrix_vector_product = math_ops.matmul(factor_matrix, sampled_embeddings, transpose_b=True)
+        print("matrix_vector_product: ", matrix_vector_product)
+        print("inputs: ", inputs)
         sampled_logits = math_ops.matmul(inputs, matrix_vector_product)
         print("inputs: ", inputs) # [batch_size, dim]
         print("sampled_logits: ", sampled_logits) # [batch_size, negative_num_count]
@@ -430,53 +432,10 @@ def sigmoid_cross_entropy_with_logits(  # pylint: disable=invalid-name
         labels=None,
         logits=None,
         name=None):
-    """Computes sigmoid cross entropy given `logits`.
-
-    Measures the probability error in discrete classification tasks in which each
-    class is independent and not mutually exclusive.  For instance, one could
-    perform multilabel classification where a picture can contain both an elephant
-    and a dog at the same time.
-
-    For brevity, let `x = logits`, `z = labels`.  The logistic loss is
-
-          z * -log(sigmoid(x)) + (1 - z) * -log(1 - sigmoid(x))
-        = z * -log(1 / (1 + exp(-x))) + (1 - z) * -log(exp(-x) / (1 + exp(-x)))
-        = z * log(1 + exp(-x)) + (1 - z) * (-log(exp(-x)) + log(1 + exp(-x)))
-        = z * log(1 + exp(-x)) + (1 - z) * (x + log(1 + exp(-x))
-        = (1 - z) * x + log(1 + exp(-x))
-        = x - x * z + log(1 + exp(-x))
-
-    For x < 0, to avoid overflow in exp(-x), we reformulate the above
-
-          x - x * z + log(1 + exp(-x))
-        = log(exp(x)) - x * z + log(1 + exp(-x))
-        = - x * z + log(1 + exp(x))
-
-    Hence, to ensure stability and avoid overflow, the implementation uses this
-    equivalent formulation
-
-        max(x, 0) - x * z + log(1 + exp(-abs(x)))
-
-    `logits` and `labels` must have the same type and shape.
-
-    Args:
-      _sentinel: Used to prevent positional parameters. Internal, do not use.
-      labels: A `Tensor` of the same type and shape as `logits`.
-      logits: A `Tensor` of type `float32` or `float64`.
-      name: A name for the operation (optional).
-
-    Returns:
-      A `Tensor` of the same shape as `logits` with the componentwise
-      logistic losses.
-
-    Raises:
-      ValueError: If `logits` and `labels` do not have the same shape.
-    """
     # pylint: disable=protected-access
     nn_ops._ensure_xent_args("sigmoid_cross_entropy_with_logits", _sentinel,
                              labels, logits)
     # pylint: enable=protected-access
-
     with ops.name_scope(name, "logistic_loss", [logits, labels]) as name:
         logits = ops.convert_to_tensor(logits, name="logits")
         labels = ops.convert_to_tensor(labels, name="labels")
@@ -504,10 +463,10 @@ def sigmoid_cross_entropy_with_logits(  # pylint: disable=invalid-name
             name=name)
 
 def nce_loss(weights,
-             biases,
-             labels,
-             inputs,
-             num_sampled,
+            biases,
+            labels,
+            inputs,
+            num_sampled,
             num_classes):
     """Computes and returns the noise-contrastive estimation training loss.
 
@@ -690,7 +649,8 @@ def nce_loss_special(weights,
     Returns:
       A `batch_size` 1-D tensor of per-example NCE losses.
     """
-
+    print("nce_loss_special - num_sampled: ", num_sampled)
+    print("nce_loss_special - labels: ", labels)
     logits, labels = _compute_logits_special(
         weights=weights,
         biases=biases,

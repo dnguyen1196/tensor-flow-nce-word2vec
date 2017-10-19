@@ -1,16 +1,17 @@
-('Average loss at step ', 0, ': ', 211.11952209472656)
-('Average loss at step ', 10, ': ', 196.87263336181641)
-('Average loss at step ', 20, ': ', 191.77894592285156)
-('Average loss at step ', 30, ': ', 173.10775299072264)
-('Average loss at step ', 40, ': ', 154.7590446472168)
-NCE method took 0.524132 minutes to run 50 iterations
-
-
-Gradient:  IndexedSlices(indices=Tensor("gradients/embedding_lookup_grad/Reshape_1:0", shape=(128,), dtype=int32), values=Tensor("gradients/embedding_lookup_grad/Reshape:0", shape=(128, 300), dtype=float32), dense_shape=Tensor("gradients/embedding_lookup_grad/ToInt32:0", shape=(2,), dtype=int32))
-Variable:  <tf.Variable 'Variable:0' shape=(10000, 300) dtype=float32_ref>
-Variable:  <tf.Variable 'Variable_1:0' shape=(300, 10000) dtype=float32_ref>
-Variable:  <tf.Variable 'Variable_2:0' shape=(10000,) dtype=float32_ref>
-Gradient:  IndexedSlices(indices=Tensor("gradients/nce_loss/embedding_lookup_grad/Reshape_1:0", shape=(192,), dtype=int64), values=Tensor("gradients/nce_loss/embedding_lookup_grad/Reshape:0", shape=(192, 300), dtype=float32), dense_shape=Tensor("gradients/nce_loss/embedding_lookup_grad/ToInt32:0", shape=(2,), dtype=int32))
-Variable:  <tf.Variable 'Variable_3:0' shape=(10000, 300) dtype=float32_ref>
-Gradient:  IndexedSlices(indices=Tensor("gradients/nce_loss/embedding_lookup_1_grad/Reshape_1:0", shape=(192,), dtype=int64), values=Tensor("gradients/nce_loss/embedding_lookup_1_grad/Reshape:0", shape=(192,), dtype=float32), dense_shape=Tensor("gradients/nce_loss/embedding_lookup_1_grad/ToInt32:0", shape=(1,), dtype=int32))
-Variable:  <tf.Variable 'Variable_4:0' shape=(10000,) dtype=float32_ref>
+embed.__class__:  <class 'tensorflow.python.framework.ops.Tensor'>
+embed:  Tensor("embedding_lookup:0", shape=(128, 300), dtype=float32)
+input:  Tensor("embedding_lookup:0", shape=(128, 300), dtype=float32)
+labels:  Tensor("compute_sampled_logits/Cast:0", shape=(128, 1), dtype=int64)
+num_sampled:  64
+num_true:  1
+num_classes:  10000
+sampled_logits:  Tensor("compute_sampled_logits/MatMul:0", shape=(128, ?), dtype=float32)
+true_w:  Tensor("compute_sampled_logits/Slice_3:0", shape=(?, ?), dtype=float32)
+true_logits:  Tensor("compute_sampled_logits/Reshape_4:0", shape=(?, 1), dtype=float32)
+sampled_logits before concat:  Tensor("compute_sampled_logits/add_1:0", shape=(128, 64), dtype=float32)
+out_logits:  Tensor("compute_sampled_logits/concat_3:0", shape=(128, 65), dtype=float32)
+2017-10-19 10:32:20.575433: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.1 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-19 10:32:20.575447: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use SSE4.2 instructions, but these are available on your machine and could speed up CPU computations.
+2017-10-19 10:32:20.575451: W tensorflow/core/platform/cpu_feature_guard.cc:45] The TensorFlow library wasn't compiled to use AVX instructions, but these are available on your machine and could speed up CPU computations.
+Average loss at step 0 : 46.7969055176
+Average loss at step 1000 : 13.3803633695
