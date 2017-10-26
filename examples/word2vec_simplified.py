@@ -195,13 +195,6 @@ with tf.Session(graph=graph) as session:
         batch_inputs, batch_context = generate_batch(data, batch_size, num_skips, skip_window)
         feed_dict = {train_inputs: batch_inputs, train_context: batch_context}
 
-        # _, loss_val = session.run([optimizer, cross_entropy], feed_dict=feed_dict)
-        # TODO: fix this so that we dont have to initialize a new optimizer
-        # optimizer = CustomOptimizer(1.0)
-        # grads_and_vars = optimizer.compute_gradients(nce_loss)
-        # optimizer = optimizer.apply_gradients(gradient_processing(grads_and_vars))
-        # _, loss_val = session.run([optimizer.apply_gradients(gradient_processing(grads_and_vars))
-        #                               , nce_loss], feed_dict=feed_dict)
         _, loss_val = session.run([opt_operation, nce_loss], feed_dict=feed_dict)
         average_loss += loss_val
 
@@ -212,21 +205,21 @@ with tf.Session(graph=graph) as session:
             average_loss = 0
 
 
-    # sim = similarity.eval()
-    # for i in range(valid_size):
-    #     valid_word = reverse_dictionary[valid_examples[i]]
-    #     top_k = 8  # number of nearest neighbors
-    #     nearest = (-sim[i, :]).argsort()[1:top_k + 1]
-    #     log_str = 'Nearest to %s:' % valid_word
-    #     close_word_list = []
-    #     for k in range(top_k):
-    #         close_word = reverse_dictionary[nearest[k]]
-    #         close_word_list.append(close_word)
-    #
-    #     print (log_str + ", ".join(close_word_list))
-    #
-    # final_embeddings = normalized_embeddings.eval()
-    # print (final_embeddings[0])
+    sim = similarity.eval()
+    for i in range(valid_size):
+        valid_word = reverse_dictionary[valid_examples[i]]
+        top_k = 8  # number of nearest neighbors
+        nearest = (-sim[i, :]).argsort()[1:top_k + 1]
+        log_str = 'Nearest to %s:' % valid_word
+        close_word_list = []
+        for k in range(top_k):
+            close_word = reverse_dictionary[nearest[k]]
+            close_word_list.append(close_word)
+
+        print (log_str + ", ".join(close_word_list))
+
+    final_embeddings = normalized_embeddings.eval()
+    print (final_embeddings[0])
 
 
 nce_end_time = dt.datetime.now()

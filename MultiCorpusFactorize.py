@@ -1,12 +1,8 @@
 import tensorflow as tf
 import math
-import zipfile
-import collections
 import os
-import random
-import nce_loss.nce_helper_funcs as nce
+import nce_loss.nce_loss_with_factor_matrix as nce
 import numpy as np
-from custom_optimizer.CustomOptimizer import CustomOptimizer
 
 
 data_stream_1 = os.path.join(os.getcwd(), "pipeline_data/cnn_article")
@@ -57,7 +53,7 @@ f.close()
 
 # CONSTANTS DECLARATION
 # TODO: toy example, to change for bigger corpus
-# TODO: figure out how to perform reshaping of of the inputs o work on matrix multiplication
+# TODO: figure out how to perform reshaping of of the inputs work on matrix multiplication
 
 vocabulary_size = 300
 embedding_size = 20
@@ -75,8 +71,8 @@ with graph.as_default():
     train_inputs_A = tf.placeholder(tf.int32, shape=[split_batch_size])
     train_inputs_B = tf.placeholder(tf.int32, shape=[split_batch_size])
 
-    train_context_A = tf.placeholder(tf.int32, shape=[split_batch_size,1])
-    train_context_B = tf.placeholder(tf.int32, shape=[split_batch_size,1])
+    train_context_A = tf.placeholder(tf.int32, shape=[split_batch_size, 1])
+    train_context_B = tf.placeholder(tf.int32, shape=[split_batch_size, 1])
 
     # This matrix embeddings is the final product that we want for the word embedding
     # This is the common word embedding matrix that all the corpora will share in the end
@@ -90,38 +86,39 @@ with graph.as_default():
                                                   stddev=1.0 / math.sqrt(embedding_size)))
     nce_biases = tf.Variable(tf.zeros([vocabulary_size]))
 
+    # todo: matrix_factor_A is symmetric because we implicitly enforce that
     X = tf.Variable(tf.random_uniform([embedding_size, embedding_size]))
     matrix_factor_A = tf.multiply(0.5, tf.add(X, tf.transpose(X)))
-    loss_tensor_A = nce.nce_loss_special(weights=nce_weights,
-                       biases=nce_biases,
-                       labels=train_context_A,
-                       inputs=embed_A,
-                       num_sampled=num_negative_sample,
-                       num_classes=vocabulary_size,
-                       factor_matrix=matrix_factor_A)
+    loss_tensor_A = nce.nce_loss_multi_corpus(weights=nce_weights,
+                                              biases=nce_biases,
+                                              contexts=train_context_A,
+                                              center_word_embeddings=embed_A,
+                                              num_sampled=num_negative_sample,
+                                              num_classes=vocabulary_size,
+                                              factor_matrix=matrix_factor_A)
 
     Y = tf.Variable(tf.random_uniform([embedding_size, embedding_size]))
     matrix_factor_B = tf.multiply(0.5, tf.add(Y, tf.transpose(Y)))
-    loss_tensor_B = nce.nce_loss_special(weights=nce_weights,
-                       biases=nce_biases,
-                       labels=train_context_B,
-                       inputs=embed_B,
-                       num_sampled=num_negative_sample,
-                       num_classes=vocabulary_size,
-                       factor_matrix=matrix_factor_B)
+    loss_tensor_B = nce.nce_loss_multi_corpus(weights=nce_weights,
+                                              biases=nce_biases,
+                                              contexts=train_context_B,
+                                              center_word_embeddings=embed_B,
+                                              num_sampled=num_negative_sample,
+                                              num_classes=vocabulary_size,
+                                              factor_matrix=matrix_factor_B)
 
     # Stacked the loss tensor
     stacked_loss_tensor = tf.concat(values=[loss_tensor_A, loss_tensor_B], axis=0)
     nce_loss = tf.reduce_mean(stacked_loss_tensor)
 
-    optimizer = CustomOptimizer(learning_rate=1.0)
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=1.0)
     optimization_ops = optimizer.minimize(nce_loss)
 
     init = tf.global_variables_initializer()
 
 
 num_steps = 10000
-step_size = 1000
+check_step = 1000
 
 with tf.Session(graph=graph) as session:
     init.run()
@@ -130,36 +127,38 @@ with tf.Session(graph=graph) as session:
     index_2 = 0
 
     for step in range(num_steps):
-        train_inputs_A = np.ndarray(shape=(split_batch_size), dtype=np.int32)
-        train_context_A = np.ndarray(shape=(split_batch_size, 1), dtype=np.int32)
+        batch_inputs_A = np.ndarray(shape=(split_batch_size), dtype=np.int32)
+        batch_context_A = np.ndarray(shape=(split_batch_size, 1), dtype=np.int32)
 
-        train_inputs_B = np.ndarray(shape=(split_batch_size), dtype=np.int32)
-        train_context_B = np.ndarray(shape=(split_batch_size, 1), dtype=np.int32)
+        batch_inputs_B = np.ndarray(shape=(split_batch_size), dtype=np.int32)
+        batch_context_B = np.ndarray(shape=(split_batch_size, 1), dtype=np.int32)
 
         for i in range(split_batch_size):
             center, context =  stream_1[(index_1 + i)%len(stream_1)]
-            train_inputs_A[i] = center
-            train_context_A[i] = context
+            batch_inputs_A[i] = center
+            batch_context_A[i] = context
             index_1 = (index_1 + split_batch_size)%len(stream_1)
 
             center, context =  stream_2[(index_2 + i)%len(stream_2)]
-            train_inputs_B[i] = center
-            train_context_B[i] = context
+            batch_inputs_B[i] = center
+            batch_context_B[i] = context
             index_2 = (index_2 + split_batch_size)%len(stream_2)
 
-        # train_context_A = tf.convert_to_tensor(train_context_A, dtype=tf.int32)
-        # train_context_B = tf.convert_to_tensor(train_context_B, dtype=tf.int32)
-
-        feed_dict = {train_inputs_A: train_inputs_A,
-                   train_context_A: train_context_A,
-                   train_inputs_B: train_inputs_B,
-                   train_context_B: train_context_B}
+        feed_dict = {train_inputs_A: batch_inputs_A,
+                     train_context_A: batch_context_A,
+                     train_inputs_B: batch_inputs_B,
+                     train_context_B: batch_context_B}
 
         _, loss_nce = session.run([optimization_ops, nce_loss], feed_dict=feed_dict)
 
-        if step % step_size == 0:
+        if step % check_step == 0:
             print(loss_nce)
 
+    # print("factor A")
+    # print(matrix_factor_A.eval())
+    #
+    # print("factor B")
+    # print(matrix_factor_B.eval())
 
 
 
