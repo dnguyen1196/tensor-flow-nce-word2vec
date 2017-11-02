@@ -84,7 +84,7 @@ def _compute_word_vector_product(nce_weights,
         # as the name implies, this flatten into a row tensor
         negative_samples_id = candidate_sampling_ops.log_uniform_candidate_sampler(
             true_classes=contexts,
-            num_true=num_true,
+            num_true=1,
             num_sampled=num_sampled,
             unique=True,
             range_max=num_classes)
@@ -92,14 +92,14 @@ def _compute_word_vector_product(nce_weights,
         negative_sampled_ids, true_expected_count, sampled_expected_count = (
             array_ops.stop_gradient(s) for s in negative_samples_id)
 
-        # Cast to all integers
         negative_sampled_ids = math_ops.cast(negative_sampled_ids, dtypes.int64)
 
         # Concatenate in the horizontal (0) direction, since both are row vectors
         all_word_ids = array_ops.concat([context_row_vec, negative_sampled_ids], 0)
+        print("all_word_ids: ", all_word_ids)
 
         # Retrieve all the word embeddings
-        # Todo: how does embedding lookup work?
+        # Todo: find out how does embedding lookup work?
         all_word_embeddings = embedding_ops.embedding_lookup(
             nce_weights, all_word_ids, partition_strategy=partition_strategy)
 
@@ -122,13 +122,11 @@ def _compute_word_vector_product(nce_weights,
         true_biases = array_ops.slice(all_biases, [0], array_ops.shape(context_row_vec))
         negative_sample_biases = array_ops.slice(all_biases, array_ops.shape(context_row_vec), [-1])
 
-
         # TODO: this part does the matrix multiplication to find true w'x product
         # TODO: figure out the bug
         dim = array_ops.shape(context_word_embeddings)[1:2]
 
         # new_true_w_shape = array_ops.concat([[-1, num_true], dim], 0)
-
         context_matrix = context_word_embeddings # [num_labels, dim]
 
         # Todo: Why do we need to expand 1 more dimension here?
@@ -170,7 +168,7 @@ def _compute_word_vector_product(nce_weights,
     return out_cross_products, out_labels
 
 
-def sigmoid_cross_entropy_with_logits(  # pylint: disable=invalid-name
+def compute_sigmoid_cross_entropy(  # pylint: disable=invalid-name
         _sentinel=None,
         labels=None,
         cross_products=None,
@@ -208,7 +206,7 @@ def sigmoid_cross_entropy_with_logits(  # pylint: disable=invalid-name
 
 def nce_loss_multi_corpus(weights,
                           biases,
-                          contexts,
+                          contexts_vectors,
                           center_word_embeddings,
                           num_sampled,
                           num_classes,
@@ -265,7 +263,7 @@ def nce_loss_multi_corpus(weights,
           objects whose concatenation along dimension 0 has shape
           [num_classes, dim].  The (possibly-partitioned) class embeddings.
       biases: A `Tensor` of shape `[num_classes]`.  The class biases.
-      contexts: A `Tensor` of type `int64` and shape `[batch_size,
+      contexts_vectors: A `Tensor` of type `int64` and shape `[batch_size,
           num_true]`. The target classes.
       center_word_embeddings: A `Tensor` of shape `[batch_size, dim]`.  The forward
           activations of the input network.
@@ -293,13 +291,13 @@ def nce_loss_multi_corpus(weights,
     cross_products, contexts = _compute_word_vector_product(
         nce_weights=weights,
         biases=biases,
-        contexts=contexts,
+        contexts=contexts_vectors,
         center_word_embeddings=center_word_embeddings,
         num_sampled=num_sampled,
         num_classes=num_classes,
         factor_matrix=factor_matrix)
 
-    sampled_losses = sigmoid_cross_entropy_with_logits(
+    sampled_losses = compute_sigmoid_cross_entropy(
         labels=contexts, cross_products=cross_products, name="sampled_losses")
 
     return _sum_rows(sampled_losses)

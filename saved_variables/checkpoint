@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/duc/Documents/homework/Research/Tensorflow/Codes/saved_variables/model.ckpt"
+all_model_checkpoint_paths: "/home/duc/Documents/homework/Research/Tensorflow/Codes/saved_variables/model.ckpt"

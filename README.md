@@ -1,6 +1,8 @@
 TODO:
-- Change the way how data is loaded - this will also depend on preprocess data
-and how data is presented?
-- Try with a real corpus (or two)
-- Figure out how to evaluate the embeddings (can copy the code on
-nearest neighbor and see)
+- Do SVD decomposition on factor_matrix_A and factor_matrix_B
+- Extract only the positive eigen values say 
+
+C_A = U sqrt(W Lambda_A+)
+C_B = U sqrt(W Lambda_B+)
+
+Then do similarity measures
