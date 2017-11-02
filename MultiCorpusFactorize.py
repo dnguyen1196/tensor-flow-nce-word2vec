@@ -165,13 +165,6 @@ with tf.Session(graph=graph) as session:
     print("final loss: ", loss_nce)
     final_embeddings = normalized_embeddings.eval()
 
-    save_model_file = "/home/duc/Documents/homework/Research/Tensorflow/Codes/saved_variables/model.ckpt"
-    saver = tf.train.Saver()
-    saver.save(session, save_model_file)
-
-
-
-def validate_evd():
     Lambda_A, W_A, _ = tf.svd(matrix_factor_A)
     Lambda_B, W_B, _ = tf.svd(matrix_factor_B)
 
@@ -181,12 +174,12 @@ def validate_evd():
     Lambda_A = tf.diag(tf.sqrt(Lambda_A))
     Lambda_B = tf.diag(tf.sqrt(Lambda_B))
 
-    modified_embeddings_A = tf.matmul(final_embeddings, tf.matmul(W_A, Lambda_A))
-    modified_embeddings_B = tf.matmul(final_embeddings, tf.matmul(W_B, Lambda_B))
+    modified_embeddings_A = tf.matmul(embeddings, tf.matmul(W_A, Lambda_A))
+    modified_embeddings_B = tf.matmul(embeddings, tf.matmul(W_B, Lambda_B))
 
-    validation_words = ["increase", "bank", "risk", "world", "potential", "degrees", "patterns"]
+    validation_words = ["increase", "risk", "world", "potential", "degrees", "patterns"]
     validation_id = np.ndarray(shape=(len(validation_words)), dtype=np.int32)
-    for i,word in enumerate(validation_words): # get the ids of validation words
+    for i, word in enumerate(validation_words):  # get the ids of validation words
         validation_id[i] = vocabulary[word]
 
     valid_embedding_A = tf.nn.embedding_lookup(modified_embeddings_A, validation_id)
@@ -197,12 +190,12 @@ def validate_evd():
     sim_A = similarity_A.eval()
     sim_B = similarity_B.eval()
 
-    top_k = 10 # 5 nearest words
+    top_k = 10  # 5 nearest words
     print()
-    print("Validate with eigenvalue decomposition")
+    print("Validate WITH eigenvalue decomposition")
     for i, word in enumerate(validation_words):
-        nearest_A = (-sim_A[i,:]).argsort()[1:top_k+1]
-        nearest_B = (-sim_B[i,:]).argsort()[1:top_k+1]
+        nearest_A = (-sim_A[i, :]).argsort()[1:top_k + 1]
+        nearest_B = (-sim_B[i, :]).argsort()[1:top_k + 1]
 
         close_word_list_A = []
         for k in range(top_k):
@@ -219,15 +212,7 @@ def validate_evd():
         print("Nearest neighbors in PLOS (ecology) corpus: ", close_word_list_B)
         print()
 
-
-"""
-validate without finding evd
-"""
-def validate_without_evd():
-    # Find similar words in two corpuses
-    validation_words = ["increase", "bank", "risk", "world", "potential", "degrees", "patterns"]
-    validation_id = np.ndarray(shape=(len(validation_words)), dtype=np.int32)
-    for i,word in enumerate(validation_words): # get the ids of validation words
+    for i, word in enumerate(validation_words):  # get the ids of validation words
         validation_id[i] = vocabulary[word]
 
     valid_embedding = tf.nn.embedding_lookup(normalized_embeddings, validation_id)
@@ -237,12 +222,12 @@ def validate_without_evd():
     sim_A = similarity_A.eval()
     sim_B = similarity_B.eval()
 
-    top_k = 10 # 5 nearest words
+    top_k = 10  # 5 nearest words
     print()
     print("Validate without eigenvalue decomposition")
     for i, word in enumerate(validation_words):
-        nearest_A = (-sim_A[i,:]).argsort()[1:top_k+1]
-        nearest_B = (-sim_B[i,:]).argsort()[1:top_k+1]
+        nearest_A = (-sim_A[i, :]).argsort()[1:top_k + 1]
+        nearest_B = (-sim_B[i, :]).argsort()[1:top_k + 1]
 
         close_word_list_A = []
         for k in range(top_k):
@@ -259,5 +244,116 @@ def validate_without_evd():
         print("Nearest neighbors in PLOS (ecology) corpus: ", close_word_list_B)
         print()
 
-validate_without_evd()
-validate_evd()
+
+def validate_evd():
+    with session.as_default():
+
+        validation_words = ["increase", "bank", "risk", "world", "potential", "degrees", "patterns"]
+        validation_id = np.ndarray(shape=(len(validation_words)), dtype=np.int32)
+        for i,word in enumerate(validation_words): # get the ids of validation words
+            validation_id[i] = vocabulary[word]
+
+        valid_embedding = tf.nn.embedding_lookup(normalized_embeddings, validation_id)
+        similarity_A = tf.matmul(valid_embedding, tf.matmul(matrix_factor_A, normalized_embeddings, transpose_b=True))
+        similarity_B = tf.matmul(valid_embedding, tf.matmul(matrix_factor_B, normalized_embeddings, transpose_b=True))
+
+        sim_A = similarity_A.eval()
+        sim_B = similarity_B.eval()
+
+        top_k = 10 # 5 nearest words
+        print()
+        print("Validate without eigenvalue decomposition")
+        for i, word in enumerate(validation_words):
+            nearest_A = (-sim_A[i,:]).argsort()[1:top_k+1]
+            nearest_B = (-sim_B[i,:]).argsort()[1:top_k+1]
+
+            close_word_list_A = []
+            for k in range(top_k):
+                close_word = reversed_vocabulary[nearest_A[k]]
+                close_word_list_A.append(close_word)
+
+            close_word_list_B = []
+            for k in range(top_k):
+                close_word = reversed_vocabulary[nearest_B[k]]
+                close_word_list_B.append(close_word)
+
+            print("For word: ", word)
+            print("Nearest neighbors in economic news corpus: ", close_word_list_A)
+            print("Nearest neighbors in PLOS (ecology) corpus: ", close_word_list_B)
+            print()
+
+        for i, word in enumerate(validation_words):  # get the ids of validation words
+            validation_id[i] = vocabulary[word]
+
+        valid_embedding = tf.nn.embedding_lookup(normalized_embeddings, validation_id)
+        similarity_A = tf.matmul(valid_embedding, tf.matmul(matrix_factor_A, embeddings, transpose_b=True))
+        similarity_B = tf.matmul(valid_embedding, tf.matmul(matrix_factor_B, embeddings, transpose_b=True))
+
+        sim_A = similarity_A.eval()
+        sim_B = similarity_B.eval()
+
+        top_k = 10  # 5 nearest words
+        print()
+        print("Validate without eigenvalue decomposition")
+        for i, word in enumerate(validation_words):
+            nearest_A = (-sim_A[i, :]).argsort()[1:top_k + 1]
+            nearest_B = (-sim_B[i, :]).argsort()[1:top_k + 1]
+
+            close_word_list_A = []
+            for k in range(top_k):
+                close_word = reversed_vocabulary[nearest_A[k]]
+                close_word_list_A.append(close_word)
+
+            close_word_list_B = []
+            for k in range(top_k):
+                close_word = reversed_vocabulary[nearest_B[k]]
+                close_word_list_B.append(close_word)
+
+            print("For word: ", word)
+            print("Nearest neighbors in economic news corpus: ", close_word_list_A)
+            print("Nearest neighbors in PLOS (ecology) corpus: ", close_word_list_B)
+            print()
+
+"""
+validate without finding evd
+"""
+def validate_without_evd():
+    with session.as_default():
+        # Find similar words in two corpuses
+        validation_words = ["increase", "bank", "risk", "world", "potential", "degrees", "patterns"]
+        validation_id = np.ndarray(shape=(len(validation_words)), dtype=np.int32)
+        for i,word in enumerate(validation_words): # get the ids of validation words
+            validation_id[i] = vocabulary[word]
+
+        valid_embedding = tf.nn.embedding_lookup(embeddings, validation_id)
+        similarity_A = tf.matmul(valid_embedding, tf.matmul(matrix_factor_A, embeddings, transpose_b=True))
+        similarity_B = tf.matmul(valid_embedding, tf.matmul(matrix_factor_B, embeddings, transpose_b=True))
+
+        sim_A = similarity_A.eval()
+        sim_B = similarity_B.eval()
+
+        top_k = 10 # 5 nearest words
+        print()
+        print("Validate without eigenvalue decomposition")
+        for i, word in enumerate(validation_words):
+            nearest_A = (-sim_A[i,:]).argsort()[1:top_k+1]
+            nearest_B = (-sim_B[i,:]).argsort()[1:top_k+1]
+
+            close_word_list_A = []
+            for k in range(top_k):
+                close_word = reversed_vocabulary[nearest_A[k]]
+                close_word_list_A.append(close_word)
+
+            close_word_list_B = []
+            for k in range(top_k):
+                close_word = reversed_vocabulary[nearest_B[k]]
+                close_word_list_B.append(close_word)
+
+            print("For word: ", word)
+            print("Nearest neighbors in economic news corpus: ", close_word_list_A)
+            print("Nearest neighbors in PLOS (ecology) corpus: ", close_word_list_B)
+            print()
+
+# validate_without_evd()
+#
+# validate_evd()

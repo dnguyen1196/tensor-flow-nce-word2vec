@@ -2,20 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d8f267a8-68fc-49b7-8642-ef0543c40e90" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/corpora/breibart_article" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/corpora/cnn_article" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/corpora/text8/__MACOSX/._text8" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/corpora/text8/text8" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/corpora/corpus" afterPath="$PROJECT_DIR$/validation.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/out/output" afterPath="$PROJECT_DIR$/out/console_output" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/pipeline_data/economics-news-aggregated.txt" afterPath="$PROJECT_DIR$/corpora/economics-news-aggregated.txt" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/pipeline_data/plos-narrative-aggregated.txt" afterPath="$PROJECT_DIR$/corpora/plos-narrative-aggregated.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saved_variables/model.ckpt.data-00000-of-00001" afterPath="$PROJECT_DIR$/saved_variables/model.ckpt.data-00000-of-00001" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saved_variables/model.ckpt.index" afterPath="$PROJECT_DIR$/saved_variables/model.ckpt.index" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saved_variables/model.ckpt.meta" afterPath="$PROJECT_DIR$/saved_variables/model.ckpt.meta" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/MultiCorpusFactorize.py" afterPath="$PROJECT_DIR$/MultiCorpusFactorize.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nce_loss/nce_loss_with_factor_matrix.py" afterPath="$PROJECT_DIR$/nce_loss/nce_loss_with_factor_matrix.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pipeline_handler/pipeline_loader.py" afterPath="$PROJECT_DIR$/pipeline_handler/pipeline_loader.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/preprocess_data.py" afterPath="$PROJECT_DIR$/preprocess_data.py" />
     </list>
     <ignored path="$PROJECT_DIR$/.idea/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -26,7 +17,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/Codes$MultiCorpusFactorize.coverage" NAME="MultiCorpusFactorize Coverage Results" MODIFIED="1509652366858" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Codes$MultiCorpusFactorize.coverage" NAME="MultiCorpusFactorize Coverage Results" MODIFIED="1509653102218" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Codes$validation.coverage" NAME="validation Coverage Results" MODIFIED="1509650803201" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Codes$MyWordToVec.coverage" NAME="MyWordToVec Coverage Results" MODIFIED="1508423532223" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Codes$preprocess_data.coverage" NAME="preprocess_data Coverage Results" MODIFIED="1509628066113" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -36,10 +27,12 @@
       <file leaf-file-name="MultiCorpusFactorize.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/MultiCorpusFactorize.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="164">
-              <caret line="193" column="0" lean-forward="true" selection-start-line="193" selection-start-column="0" selection-end-line="193" selection-end-column="0" />
+            <state relative-caret-position="215">
+              <caret line="318" column="3" lean-forward="true" selection-start-line="318" selection-start-column="3" selection-end-line="318" selection-end-column="3" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
+                <element signature="e#10083#13115#0" expanded="false" />
+                <element signature="e#13186#14869#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -70,8 +63,8 @@
       <file leaf-file-name="word2vec_simplified.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/examples/word2vec_simplified.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="137">
-              <caret line="214" column="0" lean-forward="false" selection-start-line="214" selection-start-column="0" selection-end-line="216" selection-end-column="46" />
+            <state relative-caret-position="286">
+              <caret line="217" column="0" lean-forward="true" selection-start-line="217" selection-start-column="0" selection-end-line="217" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -597,14 +590,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/examples/word2vec_simplified.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="137">
-          <caret line="214" column="0" lean-forward="false" selection-start-line="214" selection-start-column="0" selection-end-line="216" selection-end-column="46" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pipeline_data/econs_pipeline">
       <provider selected="true" editor-type-id="LargeFileEditor">
         <state relative-caret-position="-1581">
@@ -681,12 +666,22 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/examples/word2vec_simplified.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="286">
+          <caret line="217" column="0" lean-forward="true" selection-start-line="217" selection-start-column="0" selection-end-line="217" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/MultiCorpusFactorize.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="164">
-          <caret line="193" column="0" lean-forward="true" selection-start-line="193" selection-start-column="0" selection-end-line="193" selection-end-column="0" />
+        <state relative-caret-position="215">
+          <caret line="318" column="3" lean-forward="true" selection-start-line="318" selection-start-column="3" selection-end-line="318" selection-end-column="3" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
+            <element signature="e#10083#13115#0" expanded="false" />
+            <element signature="e#13186#14869#0" expanded="false" />
           </folding>
         </state>
       </provider>
